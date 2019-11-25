@@ -31,7 +31,10 @@ import com.here.sdk.gestures.TapListener;
 import com.here.sdk.mapviewlite.LoadSceneCallback;
 import com.here.sdk.mapviewlite.MapCircle;
 import com.here.sdk.mapviewlite.MapCircleStyle;
+import com.here.sdk.mapviewlite.MapImage;
+import com.here.sdk.mapviewlite.MapImageFactory;
 import com.here.sdk.mapviewlite.MapMarker;
+import com.here.sdk.mapviewlite.MapMarkerImageStyle;
 import com.here.sdk.mapviewlite.MapScene;
 import com.here.sdk.mapviewlite.MapStyle;
 import com.here.sdk.mapviewlite.MapViewLite;
@@ -53,7 +56,11 @@ public class CarteFragment extends Fragment {
     LocationProvider provider;
     LocationListener locationListener;
     private Location currentBestLocation = null;
-    MapCircle mapCircle;
+    private ArrayList<MapCircle> myC;
+    private MapImage mapImage;
+    private MapMarker mapMarker = new MapMarker(new GeoCoordinates(5.0,5.0));
+    Double myLat = 5.0;
+    Double myLong = 5.0;
     // permissions request code
     private final static int REQUEST_CODE_ASK_PERMISSIONS = 1;
 
@@ -70,11 +77,15 @@ public class CarteFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
+        myC = new ArrayList<MapCircle>();
         View v = inflater.inflate(R.layout.fragment_carte, container, false);
         mapView = v.findViewById(R.id.carteAffiche);
         mapView.onCreate(savedInstanceState);
         checkPermissions();
+        mapImage = MapImageFactory.fromResource(mapView.getResources(), R.drawable.loupe);
+        mapMarker.addImage(mapImage, new MapMarkerImageStyle());
+        mapView.getMapScene().addMapMarker(mapMarker);
+        mapMarker.setVisible(true);
         setLongPressGestureHandler(mapView);
         return v;
 
@@ -113,12 +124,10 @@ public class CarteFragment extends Fragment {
             @Override
             public void onLoadScene(@Nullable SceneError sceneError) {
                 if (sceneError == null) {
-                    mapView.getCamera().setTarget(new GeoCoordinates(loc.getLatitude(), loc.getLongitude()));
+                    mapView.getCamera().setTarget(new GeoCoordinates(loc.getLatitude(),loc.getLongitude()));
+                    myLat = loc.getLatitude();
+                    myLong =loc.getLongitude();
                     mapView.getCamera().setZoomLevel(19);
-                    mapCircle = createMapCircle(new GeoCoordinates(loc.getLatitude(),loc.getLongitude()),15, 0x0C9C);
-                    MapScene mapScene = mapView.getMapScene();
-                    mapScene.addMapCircle(mapCircle);
-
                 } else {
                     Log.d("main: ", "onLoadScene failed: " + sceneError.toString());
                 }
@@ -170,6 +179,9 @@ public class CarteFragment extends Fragment {
 
         if (mapView != null)
             mapView.onResume();
+            for(MapCircle m: myC){
+                mapView.getMapScene().addMapCircle(m);
+            }
     }
 
     @Override
@@ -187,11 +199,11 @@ public class CarteFragment extends Fragment {
             double longitude=location.getLongitude();
             String msg="New Latitude: "+latitude + "New Longitude: "+longitude;
             Toast.makeText(getContext(),msg,Toast.LENGTH_LONG).show();
-            mapView.getCamera().setTarget(new GeoCoordinates(location.getLatitude(), location.getLongitude()));
+            mapView.getCamera().setTarget(new GeoCoordinates(latitude,longitude));
             mapView.getCamera().setZoomLevel(19);
-            mapView.getMapScene().removeMapCircle(mapCircle);
-            mapCircle = createMapCircle(new GeoCoordinates(latitude,longitude), 15, 0x0C9C);
-            mapView.getMapScene().addMapCircle(mapCircle);
+            mapMarker.setCoordinates(new GeoCoordinates(latitude,longitude));
+            myLat = latitude;
+            myLong =longitude;
         }
 
         @Override
@@ -215,7 +227,7 @@ public class CarteFragment extends Fragment {
         MapCircleStyle mapCircleStyle = new MapCircleStyle();
         mapCircleStyle.setFillColor(l, PixelFormat.RGBA_8888);
         MapCircle mapCircle = new MapCircle(geoCircle, mapCircleStyle);
-
+        myC.add(mapCircle);
         return mapCircle;
     }
 
@@ -234,8 +246,7 @@ public class CarteFragment extends Fragment {
 
                 if (gestureState == GestureState.END) {
                     Log.d(TAG, "LongPress finger lifted at: " + geoCoordinates);
-                    testCreation(geoCoordinates);
-
+                    testCreation(new GeoCoordinates(myLat,myLong));
                 }
             }
         });
@@ -243,12 +254,11 @@ public class CarteFragment extends Fragment {
 
 
     public void testCreation(GeoCoordinates geo){
-
         Intent i = new Intent(getActivity(), CreationActivity.class);
         i.putExtra(CreationActivity.EXTRA_CoordN, geo.latitude);
         i.putExtra(CreationActivity.EXTRA_CoordO, geo.longitude);
         startActivityForResult(i, 0);
-        mapCircle = createMapCircle(geo, 40, 0x9999);
+        MapCircle mapCircle = createMapCircle(geo,30, 0x9999);
         mapView.getMapScene().addMapCircle(mapCircle);
     }
 
