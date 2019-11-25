@@ -2,8 +2,6 @@ package com.example.localizer;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
@@ -12,38 +10,40 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.PermissionChecker;
-import androidx.fragment.app.Fragment;
-
-import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+
+import com.here.sdk.core.GeoCircle;
 import com.here.sdk.core.GeoCoordinates;
+import com.here.sdk.core.Point2D;
+import com.here.sdk.gestures.GestureState;
+import com.here.sdk.gestures.LongPressListener;
+import com.here.sdk.gestures.TapListener;
 import com.here.sdk.mapviewlite.LoadSceneCallback;
+import com.here.sdk.mapviewlite.MapCircle;
+import com.here.sdk.mapviewlite.MapCircleStyle;
+import com.here.sdk.mapviewlite.MapMarker;
+import com.here.sdk.mapviewlite.MapScene;
 import com.here.sdk.mapviewlite.MapStyle;
 import com.here.sdk.mapviewlite.MapViewLite;
+import com.here.sdk.mapviewlite.PixelFormat;
 import com.here.sdk.mapviewlite.SceneError;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
-import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.Context.LOCATION_SERVICE;
 import static androidx.constraintlayout.widget.Constraints.TAG;
-import static androidx.core.content.PermissionChecker.checkSelfPermission;
-import static com.here.sdk.core.threading.ThreadingInitializer.initialize;
 
 public class CarteFragment extends Fragment {
 
@@ -53,6 +53,7 @@ public class CarteFragment extends Fragment {
     LocationProvider provider;
     LocationListener locationListener;
     private Location currentBestLocation = null;
+    MapCircle mapCircle;
     // permissions request code
     private final static int REQUEST_CODE_ASK_PERMISSIONS = 1;
 
@@ -74,6 +75,7 @@ public class CarteFragment extends Fragment {
         mapView = v.findViewById(R.id.carteAffiche);
         mapView.onCreate(savedInstanceState);
         checkPermissions();
+        setLongPressGestureHandler(mapView);
         return v;
 
     }
@@ -112,7 +114,11 @@ public class CarteFragment extends Fragment {
             public void onLoadScene(@Nullable SceneError sceneError) {
                 if (sceneError == null) {
                     mapView.getCamera().setTarget(new GeoCoordinates(loc.getLatitude(), loc.getLongitude()));
-                    mapView.getCamera().setZoomLevel(14);
+                    mapView.getCamera().setZoomLevel(19);
+                    mapCircle = createMapCircle(new GeoCoordinates(loc.getLatitude(),loc.getLongitude()),15, 0x0C9C);
+                    MapScene mapScene = mapView.getMapScene();
+                    mapScene.addMapCircle(mapCircle);
+
                 } else {
                     Log.d("main: ", "onLoadScene failed: " + sceneError.toString());
                 }
@@ -181,6 +187,11 @@ public class CarteFragment extends Fragment {
             double longitude=location.getLongitude();
             String msg="New Latitude: "+latitude + "New Longitude: "+longitude;
             Toast.makeText(getContext(),msg,Toast.LENGTH_LONG).show();
+            mapView.getCamera().setTarget(new GeoCoordinates(location.getLatitude(), location.getLongitude()));
+            mapView.getCamera().setZoomLevel(19);
+            mapView.getMapScene().removeMapCircle(mapCircle);
+            mapCircle = createMapCircle(new GeoCoordinates(latitude,longitude), 15, 0x0C9C);
+            mapView.getMapScene().addMapCircle(mapCircle);
         }
 
         @Override
@@ -198,5 +209,47 @@ public class CarteFragment extends Fragment {
 
         }
     };
+
+    private MapCircle createMapCircle(GeoCoordinates geo,float radiusInMeters,long l) {
+        GeoCircle geoCircle = new GeoCircle(geo, radiusInMeters);
+        MapCircleStyle mapCircleStyle = new MapCircleStyle();
+        mapCircleStyle.setFillColor(l, PixelFormat.RGBA_8888);
+        MapCircle mapCircle = new MapCircle(geoCircle, mapCircleStyle);
+
+        return mapCircle;
+    }
+
+    private void setLongPressGestureHandler(MapViewLite mapView) {
+        mapView.getGestures().setLongPressListener(new LongPressListener() {
+            @Override
+            public void onLongPress(@NonNull GestureState gestureState, @NonNull Point2D touchPoint) {
+                GeoCoordinates geoCoordinates = mapView.getCamera().viewToGeoCoordinates(touchPoint);
+                if (gestureState == GestureState.BEGIN) {
+                    Log.d(TAG, "LongPress detected at: " + geoCoordinates);
+                }
+
+                if (gestureState == GestureState.UPDATE) {
+                    Log.d(TAG, "LongPress update at: " + geoCoordinates);
+                }
+
+                if (gestureState == GestureState.END) {
+                    Log.d(TAG, "LongPress finger lifted at: " + geoCoordinates);
+                    testCreation(geoCoordinates);
+
+                }
+            }
+        });
+    }
+
+
+    public void testCreation(GeoCoordinates geo){
+
+        Intent i = new Intent(getActivity(), CreationActivity.class);
+        i.putExtra(CreationActivity.EXTRA_CoordN, geo.latitude);
+        i.putExtra(CreationActivity.EXTRA_CoordO, geo.longitude);
+        startActivityForResult(i, 0);
+        mapCircle = createMapCircle(geo, 40, 0x9999);
+        mapView.getMapScene().addMapCircle(mapCircle);
+    }
 
 }

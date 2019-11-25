@@ -109,12 +109,5 @@ public class MainActivity extends AppCompatActivity implements ListeFragment.OnL
         }catch (NullPointerException ignored){}
     }
 
-    public void testCreation(View view){
 
-        Intent i = new Intent(this, CreationActivity.class);
-        i.putExtra(CreationActivity.EXTRA_CoordN, 10.7402d);
-        i.putExtra(CreationActivity.EXTRA_CoordO, -8.2114d);
-
-        startActivityForResult(i, 0);
-    }
 }
