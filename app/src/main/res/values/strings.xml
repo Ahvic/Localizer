@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Localizer</string>
+    <string name="text_TabCarte">Carte</string>
+    <string name="text_TabNote">Notes</string>
+
+    <string name="texte_Placeholder">Kono Giorno Giovanna Nige Umega Aru"</string>
+    <string name="texte_Details_Titre">Le titre</string>
+    <string name="texte_Details_Coord">Les coordonnées</string>
+    <string name="texte_Details_Contenu">Le contenu qui est plus long que le reste et qui demande donc de prendre en compte les spécifications induites par un changement d échelle par rapport au ligne contenant le titre</string>
+
+    <string name="texte_Creation_Titre">Titre de la note</string>
+    <string name="texte_Creation_Contenu">Contenu de la note</string>
+</resources>
