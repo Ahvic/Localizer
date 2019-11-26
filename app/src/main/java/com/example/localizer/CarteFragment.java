@@ -2,13 +2,13 @@ package com.example.localizer;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.location.LocationProvider;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,13 +21,14 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentPagerAdapter;
 
+import com.here.sdk.core.Anchor2D;
 import com.here.sdk.core.GeoCircle;
 import com.here.sdk.core.GeoCoordinates;
 import com.here.sdk.core.Point2D;
 import com.here.sdk.gestures.GestureState;
 import com.here.sdk.gestures.LongPressListener;
-import com.here.sdk.gestures.TapListener;
 import com.here.sdk.mapviewlite.LoadSceneCallback;
 import com.here.sdk.mapviewlite.MapCircle;
 import com.here.sdk.mapviewlite.MapCircleStyle;
@@ -35,7 +36,6 @@ import com.here.sdk.mapviewlite.MapImage;
 import com.here.sdk.mapviewlite.MapImageFactory;
 import com.here.sdk.mapviewlite.MapMarker;
 import com.here.sdk.mapviewlite.MapMarkerImageStyle;
-import com.here.sdk.mapviewlite.MapScene;
 import com.here.sdk.mapviewlite.MapStyle;
 import com.here.sdk.mapviewlite.MapViewLite;
 import com.here.sdk.mapviewlite.PixelFormat;
@@ -51,42 +51,71 @@ import static androidx.constraintlayout.widget.Constraints.TAG;
 public class CarteFragment extends Fragment {
 
     private MapViewLite mapView;
-    private PermissionsRequestor permissionsRequestor;
     LocationManager locationManager;
-    LocationProvider provider;
-    LocationListener locationListener;
     private Location currentBestLocation = null;
     private ArrayList<MapCircle> myC;
     private MapImage mapImage;
     private MapMarker mapMarker = new MapMarker(new GeoCoordinates(5.0,5.0));
     Double myLat = 5.0;
     Double myLong = 5.0;
-    // permissions request code
+
+    private List<MapMarker> listeMarqueur;
+
+    private static final String[] REQUIRED_SDK_PERMISSIONS = new String[] {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE };
     private final static int REQUEST_CODE_ASK_PERMISSIONS = 1;
 
-    /**
-     * Permissions that need to be explicitly requested from end user.
-     */
-    private static final String[] REQUIRED_SDK_PERMISSIONS = new String[] {
-            Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE };
+    LocationListener locationListenerGPS=new LocationListener() {
+        @Override
+        public void onLocationChanged(android.location.Location location) {
+            double latitude=location.getLatitude();
+            double longitude=location.getLongitude();
+            String msg="New Latitude: "+latitude + "New Longitude: "+longitude;
+            Toast.makeText(getContext(),msg,Toast.LENGTH_LONG).show();
+            mapView.getCamera().setTarget(new GeoCoordinates(latitude,longitude));
+            mapView.getCamera().setZoomLevel(19);
+            mapMarker.setCoordinates(new GeoCoordinates(latitude,longitude));
+            myLat = latitude;
+            myLong =longitude;
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+
+        }
+    };
 
     public CarteFragment() {
         // Required empty public constructor
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
         myC = new ArrayList<MapCircle>();
+        listeMarqueur = new ArrayList<MapMarker>();
+
         View v = inflater.inflate(R.layout.fragment_carte, container, false);
+
         mapView = v.findViewById(R.id.carteAffiche);
         mapView.onCreate(savedInstanceState);
         checkPermissions();
-        mapImage = MapImageFactory.fromResource(mapView.getResources(), R.drawable.loupe);
+
+        mapImage = MapImageFactory.fromResource(mapView.getResources(), R.drawable.circle);
         mapMarker.addImage(mapImage, new MapMarkerImageStyle());
         mapView.getMapScene().addMapMarker(mapMarker);
         mapMarker.setVisible(true);
         setLongPressGestureHandler(mapView);
+
         return v;
 
     }
@@ -111,11 +140,6 @@ public class CarteFragment extends Fragment {
             onRequestPermissionsResult(REQUEST_CODE_ASK_PERMISSIONS, REQUIRED_SDK_PERMISSIONS,
                     grantResults);
         }
-    }
-
-    private boolean isLocationEnabled() {
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
-                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
     }
 
     private void loadMapScene(Location loc) {
@@ -155,7 +179,7 @@ public class CarteFragment extends Fragment {
                 String provider = locationManager.getBestProvider(criteria, true);
 
                 if(provider != null) {
-                    locationManager.requestLocationUpdates(provider, 2 * 60 * 1000, 10, locationListenerGPS);
+                    locationManager.requestLocationUpdates(provider, 5 * 60 * 1000, 10, locationListenerGPS);
                     while(currentBestLocation == null) {
                         currentBestLocation = locationManager.getLastKnownLocation(provider);
                         loadMapScene(currentBestLocation);
@@ -177,11 +201,12 @@ public class CarteFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        if (mapView != null)
+        if (mapView != null) {
             mapView.onResume();
-            for(MapCircle m: myC){
+            for (MapCircle m : myC) {
                 mapView.getMapScene().addMapCircle(m);
             }
+        }
     }
 
     @Override
@@ -192,35 +217,23 @@ public class CarteFragment extends Fragment {
             mapView.onDestroy();
     }
 
-    LocationListener locationListenerGPS=new LocationListener() {
-        @Override
-        public void onLocationChanged(android.location.Location location) {
-            double latitude=location.getLatitude();
-            double longitude=location.getLongitude();
-            String msg="New Latitude: "+latitude + "New Longitude: "+longitude;
-            Toast.makeText(getContext(),msg,Toast.LENGTH_LONG).show();
-            mapView.getCamera().setTarget(new GeoCoordinates(latitude,longitude));
-            mapView.getCamera().setZoomLevel(19);
-            mapMarker.setCoordinates(new GeoCoordinates(latitude,longitude));
-            myLat = latitude;
-            myLong =longitude;
+    public void majMarqueur(ListeNotes ln)
+    {
+        for(int i = 0; i < ln.size(); i++)
+        {
+            Note n = ln.get(i);
+            GeoCoordinates geo = new GeoCoordinates(n.getCoordO(), n.getCoordN());
+            MapMarker mapMarker = new MapMarker(geo);
+            MapMarkerImageStyle mapMarkerImageStyle = new MapMarkerImageStyle();
+            mapMarkerImageStyle.setAnchorPoint(new Anchor2D(0.5F, 1));
+
+            MapImage mapImage = MapImageFactory.fromResource(getResources(), R.drawable.poi);
+            mapMarker.addImage(mapImage, mapMarkerImageStyle);
+
+            mapView.getMapScene().addMapMarker(mapMarker);
+            listeMarqueur.add(mapMarker);
         }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-
-        }
-    };
+    }
 
     private MapCircle createMapCircle(GeoCoordinates geo,float radiusInMeters,long l) {
         GeoCircle geoCircle = new GeoCircle(geo, radiusInMeters);

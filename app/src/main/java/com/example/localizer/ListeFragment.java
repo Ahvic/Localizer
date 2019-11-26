@@ -10,8 +10,6 @@ import android.view.ViewGroup;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.List;
-
 public class ListeFragment extends Fragment {
 
     private OnListFragmentInteractionListener mListener;
@@ -39,6 +37,7 @@ public class ListeFragment extends Fragment {
                 mAdapter = new ListeNoteRecyclerViewAdapter(Notes, mListener);
 
             recyclerView.setAdapter(mAdapter);
+            ((MainActivity)getActivity()).envoiListeNote(Notes);
         }
 
         return view;
@@ -63,12 +62,14 @@ public class ListeFragment extends Fragment {
 
     public void supprimerNote(Note n){
         int index = Notes.effacerNote(n.getTitre());
+        ((MainActivity)getActivity()).envoiListeNote(Notes);
 
         mAdapter.notifyItemRemoved(index);
     }
 
     public void creerNote(String titre, String contenu, int image, double coordN, double coordO){
         int index = Notes.creerNote(titre, contenu, image, coordN, coordO);
+        ((MainActivity)getActivity()).envoiListeNote(Notes);
 
         if(index != -1)
             mAdapter.notifyItemInserted(index);
@@ -76,9 +77,5 @@ public class ListeFragment extends Fragment {
 
     public interface OnListFragmentInteractionListener {
         void onListFragmentInteraction(Note item);
-    }
-
-    public ListeNotes getListeNotes(){
-        return Notes;
     }
 }

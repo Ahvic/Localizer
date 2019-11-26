@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.tabs.TabLayout;
@@ -109,5 +110,23 @@ public class MainActivity extends AppCompatActivity implements ListeFragment.OnL
         }catch (NullPointerException ignored){}
     }
 
+    /**
+     * Sert à faire la communciation de la liste des notes
+     * de listeFragment à CarteFragment
+     *
+     * Est appelé lors d'une modification sur CarteFragment
+     * @param n
+     */
 
+    public void envoiListeNote(ListeNotes n){
+        FragmentManager fm = getSupportFragmentManager();
+
+        for(Fragment f: fm.getFragments()){
+            String log = f.toString();
+
+            if(log.substring(0,13).equals("CarteFragment"))
+                ((CarteFragment)f).majMarqueur(n);
+        }
+
+    }
 }
