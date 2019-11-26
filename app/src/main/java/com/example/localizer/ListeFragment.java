@@ -10,6 +10,8 @@ import android.view.ViewGroup;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.List;
+
 public class ListeFragment extends Fragment {
 
     private OnListFragmentInteractionListener mListener;
@@ -74,5 +76,9 @@ public class ListeFragment extends Fragment {
 
     public interface OnListFragmentInteractionListener {
         void onListFragmentInteraction(Note item);
+    }
+
+    public ListeNotes getListeNotes(){
+        return Notes;
     }
 }

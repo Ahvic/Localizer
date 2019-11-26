@@ -70,8 +70,6 @@ public class CreationActivity extends AppCompatActivity implements AdapterView.O
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         String nom = (String)parent.getItemAtPosition(position);
 
-        Log.e("Creation activity", "valeur: " + nom);
-
         switch(nom){
             case "Lieu": image = R.drawable.location;
                 break;

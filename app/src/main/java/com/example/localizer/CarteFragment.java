@@ -21,9 +21,12 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
+import com.here.sdk.core.Anchor2D;
 import com.here.sdk.core.GeoCircle;
 import com.here.sdk.core.GeoCoordinates;
+import com.here.sdk.core.Metadata;
 import com.here.sdk.core.Point2D;
 import com.here.sdk.gestures.GestureState;
 import com.here.sdk.gestures.LongPressListener;
@@ -31,7 +34,10 @@ import com.here.sdk.gestures.TapListener;
 import com.here.sdk.mapviewlite.LoadSceneCallback;
 import com.here.sdk.mapviewlite.MapCircle;
 import com.here.sdk.mapviewlite.MapCircleStyle;
+import com.here.sdk.mapviewlite.MapImage;
+import com.here.sdk.mapviewlite.MapImageFactory;
 import com.here.sdk.mapviewlite.MapMarker;
+import com.here.sdk.mapviewlite.MapMarkerImageStyle;
 import com.here.sdk.mapviewlite.MapScene;
 import com.here.sdk.mapviewlite.MapStyle;
 import com.here.sdk.mapviewlite.MapViewLite;
@@ -48,20 +54,47 @@ import static androidx.constraintlayout.widget.Constraints.TAG;
 public class CarteFragment extends Fragment {
 
     private MapViewLite mapView;
-    private PermissionsRequestor permissionsRequestor;
-    LocationManager locationManager;
-    LocationProvider provider;
-    LocationListener locationListener;
+    private LocationManager locationManager;
     private Location currentBestLocation = null;
-    MapCircle mapCircle;
-    // permissions request code
+    private MapCircle mapCircle;
     private final static int REQUEST_CODE_ASK_PERMISSIONS = 1;
 
     /**
-     * Permissions that need to be explicitly requested from end user.
+     * Les permissions obligatoires
      */
-    private static final String[] REQUIRED_SDK_PERMISSIONS = new String[] {
-            Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE };
+    private static final String[] REQUIRED_SDK_PERMISSIONS = new String[] {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE };
+
+    private ListeNotes listeNotes;
+    private LocationListener locationListenerGPS=new LocationListener() {
+        @Override
+        public void onLocationChanged(android.location.Location location) {
+            double latitude=location.getLatitude();
+            double longitude=location.getLongitude();
+            String msg="New Latitude: "+latitude + "New Longitude: "+longitude;
+            Toast.makeText(getContext(),msg,Toast.LENGTH_LONG).show();
+            mapView.getCamera().setTarget(new GeoCoordinates(location.getLatitude(), location.getLongitude()));
+            mapView.getCamera().setZoomLevel(19);
+            mapView.getMapScene().removeMapCircle(mapCircle);
+            mapCircle = createMapCircle(new GeoCoordinates(latitude,longitude), 15, 0x0C9C);
+            mapView.getMapScene().addMapCircle(mapCircle);
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+
+        }
+    };
+    private List<MapMarker> listeMarqeur = new ArrayList<>();
 
     public CarteFragment() {
         // Required empty public constructor
@@ -76,8 +109,8 @@ public class CarteFragment extends Fragment {
         mapView.onCreate(savedInstanceState);
         checkPermissions();
         setLongPressGestureHandler(mapView);
-        return v;
 
+        return v;
     }
 
     private void checkPermissions() {
@@ -100,30 +133,6 @@ public class CarteFragment extends Fragment {
             onRequestPermissionsResult(REQUEST_CODE_ASK_PERMISSIONS, REQUIRED_SDK_PERMISSIONS,
                     grantResults);
         }
-    }
-
-    private boolean isLocationEnabled() {
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
-                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-    }
-
-    private void loadMapScene(Location loc) {
-        // Load a scene from the SDK to render the map with a map style.
-        mapView.getMapScene().loadScene(MapStyle.NORMAL_DAY, new LoadSceneCallback() {
-            @Override
-            public void onLoadScene(@Nullable SceneError sceneError) {
-                if (sceneError == null) {
-                    mapView.getCamera().setTarget(new GeoCoordinates(loc.getLatitude(), loc.getLongitude()));
-                    mapView.getCamera().setZoomLevel(19);
-                    mapCircle = createMapCircle(new GeoCoordinates(loc.getLatitude(),loc.getLongitude()),15, 0x0C9C);
-                    MapScene mapScene = mapView.getMapScene();
-                    mapScene.addMapCircle(mapCircle);
-
-                } else {
-                    Log.d("main: ", "onLoadScene failed: " + sceneError.toString());
-                }
-            }
-        });
     }
 
     @SuppressLint("MissingPermission")
@@ -155,6 +164,24 @@ public class CarteFragment extends Fragment {
                 break;
         }
     }
+    private void loadMapScene(Location loc) {
+        // Load a scene from the SDK to render the map with a map style.
+        mapView.getMapScene().loadScene(MapStyle.NORMAL_DAY, new LoadSceneCallback() {
+            @Override
+            public void onLoadScene(@Nullable SceneError sceneError) {
+                if (sceneError == null) {
+                    mapView.getCamera().setTarget(new GeoCoordinates(loc.getLatitude(), loc.getLongitude()));
+                    mapView.getCamera().setZoomLevel(19);
+                    mapCircle = createMapCircle(new GeoCoordinates(loc.getLatitude(),loc.getLongitude()),15, 0x0C9C);
+                    MapScene mapScene = mapView.getMapScene();
+                    mapScene.addMapCircle(mapCircle);
+
+                } else {
+                    Log.d("main: ", "onLoadScene failed: " + sceneError.toString());
+                }
+            }
+        });
+    }
 
     @Override
     public void onPause() {
@@ -168,8 +195,9 @@ public class CarteFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        if (mapView != null)
+        if (mapView != null){
             mapView.onResume();
+        }
     }
 
     @Override
@@ -179,36 +207,6 @@ public class CarteFragment extends Fragment {
         if (mapView != null)
             mapView.onDestroy();
     }
-
-    LocationListener locationListenerGPS=new LocationListener() {
-        @Override
-        public void onLocationChanged(android.location.Location location) {
-            double latitude=location.getLatitude();
-            double longitude=location.getLongitude();
-            String msg="New Latitude: "+latitude + "New Longitude: "+longitude;
-            Toast.makeText(getContext(),msg,Toast.LENGTH_LONG).show();
-            mapView.getCamera().setTarget(new GeoCoordinates(location.getLatitude(), location.getLongitude()));
-            mapView.getCamera().setZoomLevel(19);
-            mapView.getMapScene().removeMapCircle(mapCircle);
-            mapCircle = createMapCircle(new GeoCoordinates(latitude,longitude), 15, 0x0C9C);
-            mapView.getMapScene().addMapCircle(mapCircle);
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-
-        }
-    };
 
     private MapCircle createMapCircle(GeoCoordinates geo,float radiusInMeters,long l) {
         GeoCircle geoCircle = new GeoCircle(geo, radiusInMeters);
@@ -234,22 +232,38 @@ public class CarteFragment extends Fragment {
 
                 if (gestureState == GestureState.END) {
                     Log.d(TAG, "LongPress finger lifted at: " + geoCoordinates);
-                    testCreation(geoCoordinates);
+                    CreationNote(geoCoordinates);
 
                 }
             }
         });
     }
 
+    private MapMarker addPOIMapMarker(GeoCoordinates geoCoordinates) {
+        MapImage mapImage = MapImageFactory.fromResource(getContext().getResources(), R.drawable.poi);
 
-    public void testCreation(GeoCoordinates geo){
+        MapMarker mapMarker = new MapMarker(geoCoordinates);
+
+        // The bottom, middle position should point to the location.
+        // By default, the anchor point is set to 0.5, 0.5.
+        MapMarkerImageStyle mapMarkerImageStyle = new MapMarkerImageStyle();
+        mapMarkerImageStyle.setAnchorPoint(new Anchor2D(0.5F, 1));
+
+        mapMarker.addImage(mapImage, mapMarkerImageStyle);
+        listeMarqeur.add(mapMarker);
+
+        return mapMarker;
+    }
+
+    public void CreationNote(GeoCoordinates geo){
 
         Intent i = new Intent(getActivity(), CreationActivity.class);
         i.putExtra(CreationActivity.EXTRA_CoordN, geo.latitude);
         i.putExtra(CreationActivity.EXTRA_CoordO, geo.longitude);
         startActivityForResult(i, 0);
-        mapCircle = createMapCircle(geo, 40, 0x9999);
-        mapView.getMapScene().addMapCircle(mapCircle);
+
+        MapMarker marqueur = addPOIMapMarker(geo);
+        mapView.getMapScene().addMapMarker(marqueur);
     }
 
 }
