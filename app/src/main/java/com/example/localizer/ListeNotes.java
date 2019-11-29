@@ -85,9 +85,6 @@ public class ListeNotes {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues toAdd = new ContentValues();
 
-        Log.e("ListeNotes","Latitude: " + coordN + " longitude: " + coordO);
-
-
         if(titre.isEmpty()) return -1;
 
         toAdd.put(DBOpenHelper.COLUMN_TITRE, titre);

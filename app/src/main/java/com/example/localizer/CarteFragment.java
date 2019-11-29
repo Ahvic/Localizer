@@ -26,9 +26,11 @@ import androidx.fragment.app.FragmentPagerAdapter;
 import com.here.sdk.core.Anchor2D;
 import com.here.sdk.core.GeoCircle;
 import com.here.sdk.core.GeoCoordinates;
+import com.here.sdk.core.Metadata;
 import com.here.sdk.core.Point2D;
 import com.here.sdk.gestures.GestureState;
 import com.here.sdk.gestures.LongPressListener;
+import com.here.sdk.gestures.TapListener;
 import com.here.sdk.mapviewlite.LoadSceneCallback;
 import com.here.sdk.mapviewlite.MapCircle;
 import com.here.sdk.mapviewlite.MapCircleStyle;
@@ -38,6 +40,8 @@ import com.here.sdk.mapviewlite.MapMarker;
 import com.here.sdk.mapviewlite.MapMarkerImageStyle;
 import com.here.sdk.mapviewlite.MapStyle;
 import com.here.sdk.mapviewlite.MapViewLite;
+import com.here.sdk.mapviewlite.PickMapItemsCallback;
+import com.here.sdk.mapviewlite.PickMapItemsResult;
 import com.here.sdk.mapviewlite.PixelFormat;
 import com.here.sdk.mapviewlite.SceneError;
 
@@ -57,6 +61,7 @@ public class CarteFragment extends Fragment {
     private MapMarker mapMarker = new MapMarker(new GeoCoordinates(5.0,5.0));
     Double myLat = 5.0;
     Double myLong = 5.0;
+    ListeNotes copieListeNote;
 
     private List<MapMarker> listeMarqueur;
 
@@ -225,6 +230,12 @@ public class CarteFragment extends Fragment {
             GeoCoordinates geo = new GeoCoordinates(n.getCoordN(), n.getCoordO());
 
             MapMarker mapMarker = new MapMarker(geo);
+
+            //Ajout des données pour retrouver la note associé quand on clic dessus
+            Metadata meta = new Metadata();
+            meta.setString("nomNote", n.getTitre());
+            mapMarker.setMetadata(meta);
+
             MapMarkerImageStyle mapMarkerImageStyle = new MapMarkerImageStyle();
             mapMarkerImageStyle.setAnchorPoint(new Anchor2D(0.5F, 1));
 
@@ -235,6 +246,8 @@ public class CarteFragment extends Fragment {
             mapView.getMapScene().addMapMarker(mapMarker);
             listeMarqueur.add(mapMarker);
         }
+
+        copieListeNote = ln;
     }
 
     private MapCircle createMapCircle(GeoCoordinates geo,float radiusInMeters,long l) {
@@ -247,6 +260,7 @@ public class CarteFragment extends Fragment {
     }
 
     private void setLongPressGestureHandler(MapViewLite mapView) {
+        //Si on appuye longtemps
         mapView.getGestures().setLongPressListener(new LongPressListener() {
             @Override
             public void onLongPress(@NonNull GestureState gestureState, @NonNull Point2D touchPoint) {
@@ -257,16 +271,77 @@ public class CarteFragment extends Fragment {
                 }
             }
         });
+
+        //Si on appuye à peine
+        mapView.getGestures().setTapListener(new TapListener() {
+            @Override
+            public void onTap(Point2D touchPoint) {
+                pickMapMarker(touchPoint);
+            }
+        });
     }
 
+    private void pickMapMarker(final Point2D touchPoint) {
+        float radiusInPixel = 10;
+        mapView.pickMapItems(touchPoint, radiusInPixel, new PickMapItemsCallback() {
+            @Override
+            public void onMapItemsPicked(@Nullable PickMapItemsResult pickMapItemsResult) {
+                if (pickMapItemsResult == null) {
+                    return;
+                }
+
+                MapMarker topmostMapMarker = pickMapItemsResult.getTopmostMarker();
+                if (topmostMapMarker == null) {
+                    return;
+                }
+
+                Note noteAffiche = null;
+
+                Metadata metadata = topmostMapMarker.getMetadata();
+                if (metadata != null) {
+                    String string = metadata.getString("nomNote");
+                    if (string != null) {
+                        String nomNote = string;
+
+                        if (copieListeNote != null) {
+                            Log.e("sdkbsdkhvsdivgsdg", "ICICICICICICICI");
+
+                            for (int i = 0; i < copieListeNote.size(); i++) {
+                                if (copieListeNote.get(i).getTitre().equals(nomNote))
+                                    noteAffiche = copieListeNote.get(i);
+                            }
+                        }
+
+                        Log.e("ClicNte",  ""+ copieListeNote.size());
+                    }
+                }
+
+                Log.e("ClicNte",  String.valueOf(noteAffiche == null));
+
+                if(noteAffiche != null){
+
+                    Intent i = new Intent(getContext(), DetailsActivity.class);
+                    i.putExtra(DetailsActivity.EXTRA_Image, noteAffiche.getImage());
+                    i.putExtra(DetailsActivity.EXTRA_Titre, noteAffiche.getTitre());
+                    i.putExtra(DetailsActivity.EXTRA_CoordN, noteAffiche.getCoordN());
+                    i.putExtra(DetailsActivity.EXTRA_CoordO, noteAffiche.getCoordO());
+                    i.putExtra(DetailsActivity.EXTRA_Contenu, noteAffiche.getContenu());
+
+                    startActivityForResult(i, 0);
+
+                    return;
+                }
+            }
+        });
+    }
 
     public void CreationNote(GeoCoordinates geo){
         Intent i = new Intent(getActivity(), CreationActivity.class);
         i.putExtra(CreationActivity.EXTRA_CoordN, geo.latitude);
         i.putExtra(CreationActivity.EXTRA_CoordO, geo.longitude);
         startActivityForResult(i, 0);
-        MapCircle mapCircle = createMapCircle(geo,30, 0x9999);
-        mapView.getMapScene().addMapCircle(mapCircle);
+
+        //TODO: NE RIEN METTRE SI ON A ANNULE LA NOTE
     }
 
 }
