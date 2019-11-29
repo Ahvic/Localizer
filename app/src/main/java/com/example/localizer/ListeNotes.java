@@ -4,6 +4,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
+
 import java.util.ArrayList;
 
 public class ListeNotes {
@@ -82,6 +84,9 @@ public class ListeNotes {
     {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues toAdd = new ContentValues();
+
+        Log.e("ListeNotes","Latitude: " + coordN + " longitude: " + coordO);
+
 
         if(titre.isEmpty()) return -1;
 

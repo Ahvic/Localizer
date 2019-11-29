@@ -46,7 +46,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static android.content.Context.LOCATION_SERVICE;
-import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class CarteFragment extends Fragment {
 
@@ -110,7 +109,8 @@ public class CarteFragment extends Fragment {
         mapView.onCreate(savedInstanceState);
         checkPermissions();
 
-        mapImage = MapImageFactory.fromResource(mapView.getResources(), R.drawable.circle);
+        //TODO: remettre le vrai cercle
+        mapImage = MapImageFactory.fromResource(mapView.getResources(), R.drawable.loupe);
         mapMarker.addImage(mapImage, new MapMarkerImageStyle());
         mapView.getMapScene().addMapMarker(mapMarker);
         mapMarker.setVisible(true);
@@ -222,12 +222,14 @@ public class CarteFragment extends Fragment {
         for(int i = 0; i < ln.size(); i++)
         {
             Note n = ln.get(i);
-            GeoCoordinates geo = new GeoCoordinates(n.getCoordO(), n.getCoordN());
+            GeoCoordinates geo = new GeoCoordinates(n.getCoordN(), n.getCoordO());
+
             MapMarker mapMarker = new MapMarker(geo);
             MapMarkerImageStyle mapMarkerImageStyle = new MapMarkerImageStyle();
             mapMarkerImageStyle.setAnchorPoint(new Anchor2D(0.5F, 1));
 
-            MapImage mapImage = MapImageFactory.fromResource(getResources(), R.drawable.poi);
+            // TODO; remettre un vrai marqueur
+            MapImage mapImage = MapImageFactory.fromResource(getResources(), R.drawable.icons8location);
             mapMarker.addImage(mapImage, mapMarkerImageStyle);
 
             mapView.getMapScene().addMapMarker(mapMarker);
@@ -249,24 +251,16 @@ public class CarteFragment extends Fragment {
             @Override
             public void onLongPress(@NonNull GestureState gestureState, @NonNull Point2D touchPoint) {
                 GeoCoordinates geoCoordinates = mapView.getCamera().viewToGeoCoordinates(touchPoint);
-                if (gestureState == GestureState.BEGIN) {
-                    Log.d(TAG, "LongPress detected at: " + geoCoordinates);
-                }
-
-                if (gestureState == GestureState.UPDATE) {
-                    Log.d(TAG, "LongPress update at: " + geoCoordinates);
-                }
 
                 if (gestureState == GestureState.END) {
-                    Log.d(TAG, "LongPress finger lifted at: " + geoCoordinates);
-                    testCreation(new GeoCoordinates(myLat,myLong));
+                     CreationNote(geoCoordinates);
                 }
             }
         });
     }
 
 
-    public void testCreation(GeoCoordinates geo){
+    public void CreationNote(GeoCoordinates geo){
         Intent i = new Intent(getActivity(), CreationActivity.class);
         i.putExtra(CreationActivity.EXTRA_CoordN, geo.latitude);
         i.putExtra(CreationActivity.EXTRA_CoordO, geo.longitude);
