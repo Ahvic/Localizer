@@ -3,6 +3,7 @@ package com.example.localizer;
 import android.content.Context;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -60,8 +61,9 @@ public class ListeFragment extends Fragment {
         mListener = null;
     }
 
-    public void supprimerNote(Note n){
-        int index = Notes.effacerNote(n.getTitre());
+    public void supprimerNote(String nom){
+        int index = Notes.effacerNote(nom);
+        Log.e("Liste", nom + " " + index);
         ((MainActivity)getActivity()).envoiListeNote(Notes);
 
         mAdapter.notifyItemRemoved(index);

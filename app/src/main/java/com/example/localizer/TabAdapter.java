@@ -1,7 +1,6 @@
 package com.example.localizer;
 
 import android.content.Context;
-import android.util.Log;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -11,16 +10,19 @@ import com.here.sdk.mapviewlite.MapViewLite;
 
 class TabAdapter extends FragmentPagerAdapter {
 
-    public MapViewLite mapView;
-
-    private Context myContext;
     int totalTabs;
 
     public TabAdapter(Context context, FragmentManager fm, int totalTabs) {
         super(fm);
-        myContext = context;
         this.totalTabs = totalTabs;
     }
+
+    /**
+     * Sert a renvoyer le fragment correspondant quand on change d'onglet
+     *
+     * @param position
+     * @return
+     */
 
     @Override
     public Fragment getItem(int position) {
@@ -35,7 +37,7 @@ class TabAdapter extends FragmentPagerAdapter {
                 return null;
         }
     }
-    // this counts total number of tabs
+
     @Override
     public int getCount() {
         return totalTabs;

@@ -12,7 +12,8 @@ import androidx.viewpager.widget.ViewPager;
 /**
  * Recopié de stackOverflow
  * Modifie le ViewPager pour ne pas changer de vue lorsqu'on glisse le doigt vers la droite
- * Sans ça, on ne pouvais pas aller vers la droite sur la carte principale
+ * Sans ça, on ne pouvais pas aller vers la droite sur la carte principale sans ouvrir
+ * la liste.
  */
 
 public class ViewPagerSansSwipe extends ViewPager {

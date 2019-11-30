@@ -2,24 +2,13 @@ package com.example.localizer;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.ViewModelProviders;
-import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.tabs.TabLayout;
-import com.here.sdk.core.GeoCoordinates;
-import com.here.sdk.mapviewlite.LoadSceneCallback;
-import com.here.sdk.mapviewlite.MapStyle;
-import com.here.sdk.mapviewlite.MapViewLite;
-import com.here.sdk.mapviewlite.SceneError;
 
 
 public class MainActivity extends AppCompatActivity implements ListeFragment.OnListFragmentInteractionListener{
@@ -59,6 +48,13 @@ public class MainActivity extends AppCompatActivity implements ListeFragment.OnL
         });
     }
 
+    /**
+     * Lance l'activité DetailsActivity quand on appuye sur
+     * une note dans la liste.
+     *
+     * @param item
+     */
+
     @Override
     public void onListFragmentInteraction(Note item) {
         selectedNote = item;
@@ -72,6 +68,14 @@ public class MainActivity extends AppCompatActivity implements ListeFragment.OnL
 
         startActivityForResult(i, 0);
     }
+
+    /**
+     * S'occupe de gérer le retour des activités de création et de lecture des notes
+     *
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data){
@@ -93,7 +97,8 @@ public class MainActivity extends AppCompatActivity implements ListeFragment.OnL
             String action = data.getStringExtra(DetailsActivity.PREFS_ACTION);
 
             if(action.equals("supprimer")){
-                fragment.supprimerNote(selectedNote);
+                String titre = data.getStringExtra(DetailsActivity.EXTRA_Titre);
+                fragment.supprimerNote(titre);
                 selectedNote = null;
             }
 

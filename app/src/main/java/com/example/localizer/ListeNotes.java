@@ -4,7 +4,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -18,9 +17,6 @@ public class ListeNotes {
     {
         listeNote = new ArrayList<>();
         appContext = ctx.getApplicationContext();
-
-        //TODO: supprimer
-        appContext.deleteDatabase("DBnotes");
 
         dbHelper = new DBOpenHelper(appContext, "DBnotes", null, 1);
         SQLiteDatabase db = dbHelper.getReadableDatabase();
@@ -47,10 +43,13 @@ public class ListeNotes {
 
         db.close();
 
+        //On initialise la bdd avec au moins deux notes pour faire joli
+        /*
         if(listeNote.size() < 2){
-            creerNote("Giorno best jojo", "WOHO WOOOOO", R.drawable.giorno, 0, 0);
-            creerNote("IGGY", "DED DED DED", R.drawable.kakyoin, 0, 0);
+            creerNote("GioGio", "WOHO WOOOOO", R.drawable.giorno, 0, 0);
+            creerNote("Kakyoin Noriaki", "Petit ange partit trop tôt", R.drawable.kakyoin, 50, 0);
         }
+         */
 
     }
 
@@ -120,7 +119,7 @@ public class ListeNotes {
         {
             Note n = listeNote.get(i);
 
-            if(n.getTitre() == titre)
+            if(n.getTitre().equals(titre))
             {
                 listeNote.remove(i);
                 return i;

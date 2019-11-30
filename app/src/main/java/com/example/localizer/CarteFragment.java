@@ -2,7 +2,6 @@ package com.example.localizer;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
@@ -21,10 +20,8 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentPagerAdapter;
 
 import com.here.sdk.core.Anchor2D;
-import com.here.sdk.core.GeoCircle;
 import com.here.sdk.core.GeoCoordinates;
 import com.here.sdk.core.Metadata;
 import com.here.sdk.core.Point2D;
@@ -33,7 +30,6 @@ import com.here.sdk.gestures.LongPressListener;
 import com.here.sdk.gestures.TapListener;
 import com.here.sdk.mapviewlite.LoadSceneCallback;
 import com.here.sdk.mapviewlite.MapCircle;
-import com.here.sdk.mapviewlite.MapCircleStyle;
 import com.here.sdk.mapviewlite.MapImage;
 import com.here.sdk.mapviewlite.MapImageFactory;
 import com.here.sdk.mapviewlite.MapMarker;
@@ -42,7 +38,6 @@ import com.here.sdk.mapviewlite.MapStyle;
 import com.here.sdk.mapviewlite.MapViewLite;
 import com.here.sdk.mapviewlite.PickMapItemsCallback;
 import com.here.sdk.mapviewlite.PickMapItemsResult;
-import com.here.sdk.mapviewlite.PixelFormat;
 import com.here.sdk.mapviewlite.SceneError;
 
 import java.util.ArrayList;
@@ -224,6 +219,10 @@ public class CarteFragment extends Fragment {
 
     public void majMarqueur(ListeNotes ln)
     {
+        for (MapMarker m: listeMarqueur) {
+            mapView.getMapScene().removeMapMarker(m);
+        }
+
         for(int i = 0; i < ln.size(); i++)
         {
             Note n = ln.get(i);
@@ -248,15 +247,6 @@ public class CarteFragment extends Fragment {
         }
 
         copieListeNote = ln;
-    }
-
-    private MapCircle createMapCircle(GeoCoordinates geo,float radiusInMeters,long l) {
-        GeoCircle geoCircle = new GeoCircle(geo, radiusInMeters);
-        MapCircleStyle mapCircleStyle = new MapCircleStyle();
-        mapCircleStyle.setFillColor(l, PixelFormat.RGBA_8888);
-        MapCircle mapCircle = new MapCircle(geoCircle, mapCircleStyle);
-        myC.add(mapCircle);
-        return mapCircle;
     }
 
     private void setLongPressGestureHandler(MapViewLite mapView) {
@@ -304,19 +294,13 @@ public class CarteFragment extends Fragment {
                         String nomNote = string;
 
                         if (copieListeNote != null) {
-                            Log.e("sdkbsdkhvsdivgsdg", "ICICICICICICICI");
-
                             for (int i = 0; i < copieListeNote.size(); i++) {
                                 if (copieListeNote.get(i).getTitre().equals(nomNote))
                                     noteAffiche = copieListeNote.get(i);
                             }
                         }
-
-                        Log.e("ClicNte",  ""+ copieListeNote.size());
                     }
                 }
-
-                Log.e("ClicNte",  String.valueOf(noteAffiche == null));
 
                 if(noteAffiche != null){
 
@@ -340,8 +324,6 @@ public class CarteFragment extends Fragment {
         i.putExtra(CreationActivity.EXTRA_CoordN, geo.latitude);
         i.putExtra(CreationActivity.EXTRA_CoordO, geo.longitude);
         startActivityForResult(i, 0);
-
-        //TODO: NE RIEN METTRE SI ON A ANNULE LA NOTE
     }
 
 }

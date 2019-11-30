@@ -1,9 +1,7 @@
 package com.example.localizer;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -53,6 +51,7 @@ public class DetailsActivity extends AppCompatActivity {
     public void supprimerNote(View view){
         Intent retour = new Intent();
         retour.putExtra(PREFS_ACTION, "supprimer");
+        retour.putExtra(EXTRA_Titre, intent.getStringExtra(EXTRA_Titre));
 
         setResult(RESULT_OK, retour);
         finish();

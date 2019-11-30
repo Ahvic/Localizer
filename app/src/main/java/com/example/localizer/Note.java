@@ -4,17 +4,8 @@ public class Note {
     private String titre;
     private String contenu;
     private int image;
-    private double coordN;
-    private double coordO;
-
-    public Note(String titre, String contenu)
-    {
-        this.titre =titre;
-        this.contenu = contenu;
-        this.image = R.drawable.giorno;
-        this.coordN = 0;
-        this.coordO = 0;
-    }
+    private double coordN;  //La latitude
+    private double coordO;  //La longitude
 
     public Note(String titre, String contenu, int image, double coordN, double coordO)
     {
